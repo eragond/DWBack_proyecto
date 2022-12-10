@@ -1,0 +1,17 @@
+server:
+  port: 8888
+  
+spring:
+  cloud:
+    config:
+      server: 
+        git:
+          uri: https://ivan_saavedra@bitbucket.org/ivan_saavedra/dwb2023-1_config-data.git
+          search-paths: api
+
+          default-label: "master"
+          
+  security:
+    user:
+      name: root
+      password: adminadmin
