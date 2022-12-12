@@ -6,10 +6,9 @@ spring:
     config:
       server: 
         git:
-          uri: https://ivan_saavedra@bitbucket.org/ivan_saavedra/dwb2023-1_config-data.git
+          uri: https://github.com/eragond/DWBack_config_data.git
           search-paths: api
-
-          default-label: "master"
+          default-label: "main"
           
   security:
     user:
