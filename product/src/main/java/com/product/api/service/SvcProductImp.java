@@ -1,121 +1,127 @@
 package com.product.api.service;
 
-import java.sql.SQLIntegrityConstraintViolationException;
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import com.product.api.dto.ApiResponse;
-import com.product.api.dto.DtoProductList;
-import com.product.api.entity.Category;
 import com.product.api.entity.Product;
 import com.product.api.repository.RepoCategory;
 import com.product.api.repository.RepoProduct;
-import com.product.api.repository.RepoProductList;
-import com.product.exception.ApiException;
+
+import java.sql.SQLIntegrityConstraintViolationException;
+import java.util.List;
+
+import static com.product.api.dto.ApiResponse.*;
 
 @Service
 public class SvcProductImp implements SvcProduct {
 
-	@Autowired
-	private RepoProduct repoProduct;
-	
-	@Autowired
-	private RepoCategory repoCategory;
-	
-	@Autowired
-	private RepoProductList repoProductList;
+    private final RepoProduct repo;
+    private final RepoCategory repoCategory;
 
-	@Override
-	public List<DtoProductList> listProducts(Integer categoryId) {
-		return repoProductList.listProducts(1, categoryId);
-	}
-	
-	@Override
-	public Product readProduct(String gtin) {
-		Product product = repoProduct.findByGtinAndStatus(gtin, 1);
-		if (product != null) {
-			return product;
-		}else
-			throw new ApiException(HttpStatus.NOT_FOUND, "product does not exist");
-	}
+    @Autowired
+    public SvcProductImp(RepoProduct repo, RepoCategory repoCategory) {
+        this.repo = repo;
+        this.repoCategory = repoCategory;
+    }
 
-	@Override
-	public ApiResponse createProduct(Product product) {
-		Category category = repoCategory.findByCategoryId(product.getCategory().getCategoryId());
-		
-		if(category == null)
-			throw new ApiException(HttpStatus.NOT_FOUND, "category not found");		
-		
-		Product retrievedProduct = repoProduct.findProduct(product.getGtin(), product.getProduct(), product.getCategory().getCategoryId());
-		
-		if(retrievedProduct != null) {
-			if(retrievedProduct.getStatus() == 0) {
-				repoProduct.updateProduct(retrievedProduct.getProduct_id(), product.getGtin(), product.getProduct(), product.getDescription(), product.getPrice(), product.getStock(), product.getCategory().getCategoryId());
-				return new ApiResponse("product activated");
-			}
-			if(product.getGtin().equalsIgnoreCase(retrievedProduct.getGtin()))
-				throw new ApiException(HttpStatus.BAD_REQUEST, "product gtin already exist");
-			if(product.getProduct().equalsIgnoreCase(retrievedProduct.getProduct()))
-				throw new ApiException(HttpStatus.BAD_REQUEST, "product name already exist");
-		}
-		
-		repoProduct.save(product);
-		return new ApiResponse("product created");
-	}
+    @Override
+    public ApiResponse<List<Product>> getProducts(Integer category_id) {
+        List<Product> products = repo.findByCategoryId(category_id);
 
-	@Override
-	public ApiResponse updateProduct(Product product, Integer id) {
-		Integer updated = 0;
-		try {
-			updated = repoProduct.updateProduct(id, product.getGtin(), product.getProduct(), product.getDescription(), product.getPrice(), product.getStock(), product.getCategory().getCategoryId());
-		}catch (DataIntegrityViolationException e) {
-			if (e.getLocalizedMessage().contains("gtin"))
-				throw new ApiException(HttpStatus.BAD_REQUEST, "product gtin already exist");
-			if (e.getLocalizedMessage().contains("product"))
-				throw new ApiException(HttpStatus.BAD_REQUEST, "product name already exist");
-			if (e.contains(SQLIntegrityConstraintViolationException.class))
-				throw new ApiException(HttpStatus.BAD_REQUEST, "category not found");
-		}
-		
-		if(updated == 0)
-			throw new ApiException(HttpStatus.BAD_REQUEST, "product cannot be updated");
-		else
-			return new ApiResponse("product updated");
-	}
+        return statusOk(products);
+    }
 
-	@Override
-	public ApiResponse deleteProduct(Integer id) {
-		if (repoProduct.deleteProduct(id) > 0)
-			return new ApiResponse("product removed");
-		else
-			throw new ApiException(HttpStatus.BAD_REQUEST, "product cannot be deleted");
-	}
+    @Override
+    public ApiResponse<Product> getProduct(String gtin) {
+        Product product = repo.findByGtinAndStatus(gtin, 1);
+        if (product == null)
+            throw statusNotFound("product does not exist");
 
-	@Override
-	public ApiResponse updateProductStock(String gtin, Integer stock) {
-		Product product = readProduct(gtin);
-		if(stock > product.getStock())
-			throw new ApiException(HttpStatus.BAD_REQUEST, "stock to update is invalid");
-		
-		repoProduct.updateProductStock(gtin, product.getStock() - stock);
-		return new ApiResponse("product stock updated");
-	}
+        product.setCategory(repoCategory.findByCategoryId(product.getCategory_id()));
+        return statusOk(product);
+    }
 
-	@Override
-	public ApiResponse updateProductCategory(Category category, String gtin) {
-		try {
-			if(repoCategory.findByCategoryId(category.getCategoryId()) == null )  
-				throw new ApiException(HttpStatus.NOT_FOUND, "category not found");
-			if(repoProduct.updateProductCategory(category.getCategoryId(), gtin) > 0)
-				return new ApiResponse("product category updated");
-			else
-				throw new ApiException(HttpStatus.NOT_FOUND, "product does not exist");
-		} catch(DataIntegrityViolationException e) {
-			throw new ApiException(HttpStatus.BAD_REQUEST, "category not found");
-		}
-	}
+    @Override
+    public ApiResponse<String> createProduct(Product in) {
+        Product productSaved = repo.findByGtinAndStatus(in.getGtin(), 0);
+        if (productSaved != null && productSaved.getStatus() == 0) {
+            // Con update validamos nombre, GTIN y categoria única
+            updateProduct(in, productSaved.getProduct_id());
+            return statusOk("product activated");
+        }
+
+        try {
+            in.setStatus(1);
+            repo.save(in);
+        } catch (DataIntegrityViolationException e) {
+            handleException(e);
+        }
+
+        return statusOk("product created");
+    }
+
+    @Override
+    public ApiResponse<String> updateProduct(Product in, Integer id) {
+        Product productSaved = repo.findByGtin(in.getGtin());
+        if (productSaved == null)
+            throw statusNotFound("product does not exist");
+
+        try {
+            repo.updateProduct(id, in.getGtin(), in.getProduct(), in.getDescription(), in.getPrice(), in.getStock(), in.getCategory_id());
+        } catch (DataIntegrityViolationException e) {
+            handleException(e);
+        }
+
+        return statusOk("product updated");
+    }
+
+    private void handleException(DataIntegrityViolationException e) {
+        if (e.getLocalizedMessage().contains("gtin"))
+            throw statusBadRequest("product gtin already exist");
+
+        if (e.getLocalizedMessage().contains("product"))
+            throw statusBadRequest("product name already exist");
+
+        if (e.contains(SQLIntegrityConstraintViolationException.class))
+            throw statusNotFound("category not found");
+
+        throw statusBadRequest("product cannot be created/updated");
+    }
+
+    @Override
+    public ApiResponse<String> deleteProduct(Integer id) {
+        if (repo.deleteProduct(id) <= 0)
+            throw statusBadRequest("product cannot be deleted");
+
+        return statusOk("product removed");
+    }
+
+    @Override
+    public ApiResponse<String> updateProductStock(String gtin, Integer stock) {
+        Product product = (Product) getProduct(gtin).getBody();
+        if (product == null)
+            throw statusNotFound("product does not exist");
+
+        if (stock > product.getStock())
+            throw statusBadRequest("stock to update is invalid");
+
+        repo.updateProductStock(gtin, product.getStock() - stock);
+        return statusOk("product stock updated");
+    }
+
+    @Override
+    public ApiResponse<String> updateProductCategory(String gtin, Integer category_id) {
+        try {
+            int updated = repo.updateProductCategory(gtin, category_id);
+            if (updated <= 0)
+                throw statusBadRequest("product category cannot be updated");
+
+        } catch (DataIntegrityViolationException e) {
+            handleException(e);
+        }
+
+        return statusOk("product category updated");
+    }
 }

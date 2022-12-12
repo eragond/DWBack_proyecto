@@ -5,10 +5,6 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.validation.constraints.Max;
@@ -22,141 +18,122 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @Table(name = "product")
 public class Product {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@JsonProperty("product_id")
-	@Column(name = "product_id")
-	private Integer product_id;
-	
-	@JsonProperty("gtin")
-	@Column(name = "gtin")
-	@NotNull(message="gtin is required")
-	private String gtin;
-	
-	@JsonProperty("product")
-	@Column(name = "product")
-	@NotNull(message="product is required")
-	private String product;
-	
-	@JsonProperty("price")
-	@Column(name = "price")
-	@NotNull(message="price is required")
-	@Min(value=0, message="price must be positive")
-	private Double price;
-	
-	@JsonProperty("description")
-	@Column(name = "description")
-	private String description;
-	
-	@JsonProperty("stock")
-	@Column(name = "stock")
-	@NotNull(message="stock is required")
-	@Min(value=1, message="stock must be greater than 0")
-	private Integer stock;
-	
-	@JsonProperty("category")
-	@NotNull(message="category_id is required")
-	@ManyToOne
-	@JoinColumn(name = "category_id")
-	private Category category;
-	
-	@JsonIgnore
-	@Column(name = "status")
-	@Min(value=0, message="status must be 0 or 1")
-	@Max(value=1, message="status must be 0 or 1")
-	private Integer status;
-	
-	public Product() {
-		super();
-	}
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonProperty("product_id")
+    @Column(name = "product_id")
+    private Integer product_id;
 
-	public Product(Integer product_id, @NotNull(message = "gtin is required") String gtin,
-			@NotNull(message = "product is required") String product,
-			@NotNull(message = "price is required") @Min(value = 0, message = "price must be positive") Double price,
-			String description,
-			@NotNull(message = "stock is required") @Min(value = 1, message = "stock must be greater than 0") Integer stock,
-			@NotNull(message = "category_id is required") Category category,
-			@Min(value = 0, message = "status must be 0 or 1") @Max(value = 1, message = "status must be 0 or 1") Integer status) {
-		super();
-		this.product_id = product_id;
-		this.gtin = gtin;
-		this.product = product;
-		this.price = price;
-		this.description = description;
-		this.stock = stock;
-		this.category = category;
-		this.status = status;
-	}
+    @JsonProperty("gtin")
+    @Column(name = "gtin")
+    @NotNull(message = "gtin is required")
+    private String gtin;
 
-	public Integer getProduct_id() {
-		return product_id;
-	}
+    @JsonProperty("product")
+    @Column(name = "product")
+    @NotNull(message = "product is required")
+    private String product;
 
-	public void setProduct_id(Integer product_id) {
-		this.product_id = product_id;
-	}
+    @JsonProperty("description")
+    @Column(name = "description")
+    private String description;
 
-	public String getGtin() {
-		return gtin;
-	}
+    @JsonProperty("price")
+    @Column(name = "price")
+    @NotNull(message = "price is required")
+    @Min(value = 0, message = "price must be positive")
+    private Double price;
 
-	public void setGtin(String gtin) {
-		this.gtin = gtin;
-	}
+    @JsonProperty("stock")
+    @Column(name = "stock")
+    @NotNull(message = "stock is required")
+    @Min(value = 1, message = "stock must be greater than 0")
+    private Integer stock;
 
-	public String getProduct() {
-		return product;
-	}
+    @JsonProperty("category_id")
+    @Column(name = "category_id")
+    @NotNull(message = "category_id is required")
+    private Integer category_id;
 
-	public void setProduct(String product) {
-		this.product = product;
-	}
+    @JsonIgnore
+    @Column(name = "status")
+    @Min(value = 0, message = "status must be 0 or 1")
+    @Max(value = 1, message = "status must be 0 or 1")
+    private Integer status;
 
-	public String getDescription() {
-		return description;
-	}
+    @Transient
+    @JsonProperty("category")
+    private Category category;
 
-	public void setDescription(String description) {
-		this.description = description;
-	}
+    public Integer getProduct_id() {
+        return product_id;
+    }
 
-	public Double getPrice() {
-		return price;
-	}
+    public void setProduct_id(Integer product_id) {
+        this.product_id = product_id;
+    }
 
-	public void setPrice(Double price) {
-		this.price = price;
-	}
+    public String getGtin() {
+        return gtin;
+    }
 
-	public Integer getStock() {
-		return stock;
-	}
+    public void setGtin(String gtin) {
+        this.gtin = gtin;
+    }
 
-	public void setStock(Integer stock) {
-		this.stock = stock;
-	}
+    public String getProduct() {
+        return product;
+    }
 
-	public Integer getStatus() {
-		return status;
-	}
+    public void setProduct(String product) {
+        this.product = product;
+    }
 
-	public void setStatus(Integer status) {
-		this.status = status;
-	}
+    public String getDescription() {
+        return description;
+    }
 
-	public Category getCategory() {
-		return category;
-	}
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-	public void setCategory(Category category) {
-		this.category = category;
-	}
+    public Double getPrice() {
+        return price;
+    }
 
-	@Override
-	public String toString() {
-		return "Product [product_id=" + product_id + ", gtin=" + gtin + ", product=" + product + ", price=" + price
-				+ ", description=" + description + ", stock=" + stock + ", category=" + category + ", status=" + status
-				+ "]";
-	}
-	
+    public void setPrice(Double price) {
+        this.price = price;
+    }
+
+    public Integer getStock() {
+        return stock;
+    }
+
+    public void setStock(Integer stock) {
+        this.stock = stock;
+    }
+
+    public Integer getCategory_id() {
+        return category_id;
+    }
+
+    public void setCategory_id(Integer category_id) {
+        this.category_id = category_id;
+    }
+
+    public Integer getStatus() {
+        return status;
+    }
+
+    public void setStatus(Integer status) {
+        this.status = status;
+    }
+
+    public Category getCategory() {
+        return category;
+    }
+
+    public void setCategory(Category category) {
+        this.category = category;
+    }
 }

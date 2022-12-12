@@ -1,20 +1,23 @@
 package com.product.api.service;
 
-import java.util.List;
-
 import com.product.api.dto.ApiResponse;
-import com.product.api.dto.DtoProductList;
-import com.product.api.entity.Category;
 import com.product.api.entity.Product;
 
-public interface SvcProduct {
-	
-	public abstract List<DtoProductList> listProducts(Integer categoryId);
-	public abstract Product readProduct(String gtin);
-	public abstract ApiResponse createProduct(Product product);
-	public abstract ApiResponse updateProduct(Product product, Integer id);
-	public abstract ApiResponse updateProductStock(String gtin, Integer stock);
-	public abstract ApiResponse deleteProduct(Integer id);
-	public abstract ApiResponse updateProductCategory(Category category, String gtin);
+import java.util.List;
 
+public interface SvcProduct {
+
+    ApiResponse<List<Product>> getProducts(Integer category_id);
+
+    ApiResponse<Product> getProduct(String gtin);
+
+    ApiResponse<String> createProduct(Product in);
+
+    ApiResponse<String> updateProduct(Product in, Integer id);
+
+    ApiResponse<String> updateProductStock(String gtin, Integer stock);
+
+    ApiResponse<String> deleteProduct(Integer id);
+
+    ApiResponse<String> updateProductCategory(String gtin, Integer category_id);
 }

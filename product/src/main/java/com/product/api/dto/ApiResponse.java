@@ -1,44 +1,41 @@
 package com.product.api.dto;
 
-import java.util.Objects;
+import com.product.exception.ApiException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
-public class ApiResponse {
-	
-	private String message;
+@SuppressWarnings("unused")
+public class ApiResponse<T> extends ResponseEntity<Object> {
 
-	public ApiResponse(String message) {
-		super();
-		this.message = message;
-	}
+    private ApiResponse(HttpStatus status, Object body) {
+        super(body, status);
+    }
 
-	public String getMessage() {
-		return message;
-	}
+    private static <T> ApiResponse<T> buildResponse(HttpStatus status, T content, String message) {
+        Object body;
+        if (content != null) {
+            body = content;
+        } else {
+            body = message;
+        }
 
-	public void setMessage(String message) {
-		this.message = message;
-	}
+        return new ApiResponse<>(status, body);
+    }
 
-	@Override
-	public int hashCode() {
-		return Objects.hash(message);
-	}
+    public static <T> ApiResponse<T> statusCreated(String message) {
+        return buildResponse(HttpStatus.CREATED, null, message);
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		ApiResponse other = (ApiResponse) obj;
-		return Objects.equals(message, other.message);
-	}
+    public static <T> ApiResponse<T> statusOk(T content) {
+        return buildResponse(HttpStatus.OK, content, null);
+    }
 
-	@Override
-	public String toString() {
-		return "ApiResponse [message=" + message + "]";
-	}
-	
+    public static ApiException statusBadRequest(String message) {
+        return new ApiException(HttpStatus.BAD_REQUEST, message);
+    }
+
+    public static ApiException statusNotFound(String message) {
+        return new ApiException(HttpStatus.NOT_FOUND, message);
+    }
+
 }
