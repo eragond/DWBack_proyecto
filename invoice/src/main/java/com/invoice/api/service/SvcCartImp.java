@@ -2,6 +2,8 @@ package com.invoice.api.service;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +20,8 @@ import com.invoice.exception.ApiException;
 
 @Service
 public class SvcCartImp implements SvcCart {
+	
+	private static final Logger log = LoggerFactory.getLogger(SvcCartImp.class);
 
     @Autowired
     RepoCart repo;
@@ -57,17 +61,24 @@ public class SvcCartImp implements SvcCart {
          * Validar si el producto ya había sido agregado al carrito para solo actualizar su cantidad
          */
         List<Cart> lprod = repo.findByRfcAndStatus(cart.getRfc(), 1);
+        Cart poss = null;
         for(Cart c : lprod) 
         	if (c.getGtin().equals(cart.getGtin())) {
-        		Integer suma = c.getQuantity() + cart.getQuantity(); 
-        		if(suma > product_stock)
-        			throw new ApiException(HttpStatus.BAD_REQUEST, "invalid quantity");
-        		cart.setQuantity(suma);
-        		break;
+        		poss = c; break;
         	}
+        
+        if(poss != null) {
+    		Integer suma = poss.getQuantity() + cart.getQuantity(); 
+    		if(suma > product_stock)
+    			throw new ApiException(HttpStatus.BAD_REQUEST, "invalid quantity");
+    		poss.setQuantity(suma);
+    		poss.setStatus(1);
+    		repo.save(poss);
+        }else {
+        	cart.setStatus(1);
+        	repo.save(cart);
+        }
 
-        cart.setStatus(1);
-        repo.save(cart);
         return new ApiResponse("item added");
     }
 

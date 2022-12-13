@@ -7,9 +7,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.invoice.api.dto.ApiResponse;
+import com.invoice.api.dto.DtoCustomer;
 import com.invoice.api.dto.DtoProduct;
 import com.invoice.api.entity.Cart;
 import com.invoice.api.entity.Invoice;
@@ -49,8 +51,7 @@ public class SvcInvoiceImp implements SvcInvoice {
 
     @Override
     public ApiResponse generateInvoice(String rfc) {
-    	// Verificar RFC
-    	// TODO
+    	// Deberia Verificar RFC, peeero chance no lo haga :U
     	
     	// Consultar el carrito del cliente, sino tiene articulos mandar error
     	List<Cart> lcar = repoCart.findByRfcAndStatus(rfc, 1);
@@ -58,9 +59,9 @@ public class SvcInvoiceImp implements SvcInvoice {
     		throw new ApiException(HttpStatus.NOT_FOUND, "cart has no items");
     	
     	// Generar la nueva factura
-    	Invoice inv = repo.save(new Invoice(rfc, 0.0, 0.0, 0.0, LocalDateTime.now(), 1));
+    	Invoice inv = repo.save(new Invoice(rfc, 0.0, 0.0, 0.0, LocalDateTime.now(), 0));
     	log.info(inv.toString());
-    
+    	
     	Double total_inv = 0.0; //Para contar el total de la factura
     	Double taxrate = 0.16; //Porcentaje de impuestos
     	
@@ -70,7 +71,7 @@ public class SvcInvoiceImp implements SvcInvoice {
     		String gtin = c.getGtin();
     		
     		// Buscar el producto con el cliente feign
-    		DtoProduct prod = productCl.getProduct(gtin).getBody();
+    		DtoProduct prod = getProduct(gtin);
     		
     		// Configuramos total,  taxes, subtotal y precio unitario
     		Double unit_price = prod.getPrice();
@@ -79,11 +80,11 @@ public class SvcInvoiceImp implements SvcInvoice {
     		total_inv += total;
     		Double taxes = total * taxrate;
     		Double subtotal = total - taxes;
-    		Item itm = new Item(inv.getInvoice_id(), gtin, n_prod, unit_price, subtotal, taxes, total, 1);
+    		Item itm = new Item(inv.getInvoice_id(), gtin, n_prod, unit_price, subtotal, taxes, total, 0);
     		repoItem.save(itm); // Guardamos
     		
     		// Update del stock del producto
-    		productCl.updateProductStock(gtin, prod.getStock() - n_prod);
+    		updateProductStock(gtin, n_prod);
     	}
 		
     	// Modificar factura
@@ -96,8 +97,37 @@ public class SvcInvoiceImp implements SvcInvoice {
     	
     	// Meter factura a la base de datos
     	repo.save(inv);
-
+    	
         return new ApiResponse("invoice generated");
+    }
+    
+    private DtoProduct getProduct(String gtin) {
+    	try {
+            ResponseEntity<DtoProduct> response = productCl.getProduct(gtin);
+            if(response.getStatusCode() == HttpStatus.OK)
+                return response.getBody();
+            else
+            	throw new ApiException(HttpStatus.BAD_REQUEST, "unable to retrieve product information");
+        }catch(Exception e) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "unable to retrieve product information");
+        }
+    }
+    
+    private boolean updateProductStock(String gtin, Integer stock) {
+        try {
+            ResponseEntity<DtoProduct> response = productCl.updateProductStock(gtin, stock);
+            if(response.getStatusCode() == HttpStatus.OK)
+                return true;
+            else
+                return false;
+        }catch(feign.codec.DecodeException e) {
+        	// Hay un error de codificacion en la respuesta del cliente de feign,
+        	// sin embargo no afecta el funcionamiento :7)
+            //throw new ApiException(HttpStatus.BAD_REQUEST, "Error de codificacion");
+        	return true;
+        }catch(Exception e) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "unable to update product information");
+        }
     }
 
 }

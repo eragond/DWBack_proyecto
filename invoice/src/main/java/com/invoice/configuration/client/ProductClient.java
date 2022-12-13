@@ -21,6 +21,6 @@ public interface ProductClient {
     public ResponseEntity<DtoProduct> getProduct(@PathVariable("gtin") String gtin);
 
     @PutMapping("product/{gtin}/stock/{stock}")
-    public ResponseEntity<ApiResponse> updateProductStock(@PathVariable("gtin") String gtin, @PathVariable("stock") Integer stock);
+    public ResponseEntity<DtoProduct> updateProductStock(@PathVariable("gtin") String gtin, @PathVariable("stock") Integer stock);
 
 }
