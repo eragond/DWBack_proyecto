@@ -64,8 +64,31 @@ public class Item {
     @Min(value=0, message="status must be 0 or 1")
     @Max(value=1, message="status must be 0 or 1")
     private Integer status;
+   
+    public Item() {
+    }
+    
+    public Item(@NotNull(message = "invoice id required") Integer id_invoice,
+			@NotNull(message = "gtin code required") String gtin,
+			@NotNull(message = "quantity required") @Min(value = 1, message = "quantity must be greater than 0") Integer quantity,
+			@NotNull(message = "unit price required") Double unit_price,
+			@NotNull(message = "subtotal required") Double subtotal, 
+			@NotNull(message = "taxes required") Double taxes,
+			@NotNull(message = "total required") Double total,
+			@Min(value = 0, message = "status must be 0 or 1") @Max(value = 1, message = "status must be 0 or 1") Integer status) {
+		super();
+		this.item_id = item_id;
+		this.id_invoice = id_invoice;
+		this.gtin = gtin;
+		this.quantity = quantity;
+		this.unit_price = unit_price;
+		this.subtotal = subtotal;
+		this.taxes = taxes;
+		this.total = total;
+		this.status = status;
+	}
 
-    public Integer getItem_id() {
+	public Integer getItem_id() {
         return item_id;
     }
 

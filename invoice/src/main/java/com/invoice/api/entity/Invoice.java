@@ -57,10 +57,24 @@ public class Invoice {
     private Integer status;
 
     public Invoice() {
-
     }
+    
+    public Invoice(@NotNull(message = "rfc required") String rfc,
+			@NotNull(message = "subtotal required") Double subtotal, @NotNull(message = "taxes required") Double taxes,
+			@NotNull(message = "total required") Double total,
+			@NotNull(message = "created_at required") LocalDateTime created_at,
+			@Min(value = 0, message = "status must be 0 or 1") @Max(value = 1, message = "status must be 0 or 1") Integer status) {
+		super();
+		this.invoice_id = invoice_id;
+		this.rfc = rfc;
+		this.subtotal = subtotal;
+		this.taxes = taxes;
+		this.total = total;
+		this.created_at = created_at;
+		this.status = status;
+	}
 
-    public Integer getInvoice_id() {
+	public Integer getInvoice_id() {
         return invoice_id;
     }
 
@@ -115,4 +129,11 @@ public class Invoice {
     public void setStatus(Integer status) {
         this.status = status;
     }
+    
+	@Override
+	public String toString() {
+		return "Invoice [invoice_id=" + invoice_id + ", rfc=" + rfc + ", subtotal=" + subtotal + ", taxes=" + taxes
+				+ ", total=" + total + ", created_at=" + created_at + ", status=" + status + "]";
+	}
+
 }
