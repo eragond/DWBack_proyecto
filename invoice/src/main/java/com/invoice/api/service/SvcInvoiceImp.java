@@ -3,15 +3,12 @@ package com.invoice.api.service;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.invoice.api.dto.ApiResponse;
-import com.invoice.api.dto.DtoCustomer;
 import com.invoice.api.dto.DtoProduct;
 import com.invoice.api.entity.Cart;
 import com.invoice.api.entity.Invoice;
@@ -24,8 +21,6 @@ import com.invoice.exception.ApiException;
 
 @Service
 public class SvcInvoiceImp implements SvcInvoice {
-	
-	private static final Logger log = LoggerFactory.getLogger(SvcInvoiceImp.class);
 
     @Autowired
     RepoInvoice repo;
@@ -60,7 +55,6 @@ public class SvcInvoiceImp implements SvcInvoice {
     	
     	// Generar la nueva factura
     	Invoice inv = repo.save(new Invoice(rfc, 0.0, 0.0, 0.0, LocalDateTime.now(), 0));
-    	log.info(inv.toString());
     	
     	Double total_inv = 0.0; //Para contar el total de la factura
     	Double taxrate = 0.16; //Porcentaje de impuestos
